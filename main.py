@@ -1,7 +1,13 @@
 import os
 import sys
+import requests
+import time
+import json
 from colorama import init, Fore
+from urllib.parse import quote
+from tqdm import tqdm
 
+url = "https://shuriken.pm/api.php"
 while True:
     os.system('cls' if os.name == 'nt' else 'clear')
     print(Fore.WHITE + "                                                   .:^!7?7!^.                            :~?PB&&@@#?")
@@ -53,5 +59,29 @@ while True:
         break
     elif cmd == "1":
         os.system('cls' if os.name == 'nt' else 'clear')
-        print("\n " + Fore.RED + "[ Search Sites ]")
-        cmd = input(Fore.RESET + " > ")
+        print(Fore.RED + "[ Search Sites ] " + Fore.BLACK + "type in ~ to go back")
+        query = input(Fore.RESET + " > ")
+        if query != "~":
+            os.system('cls' if os.name == 'nt' else 'clear')
+            print(Fore.RED + "[ Search Sites ] " + Fore.BLACK + "Page")
+            print("\n [>] Searching for " + Fore.LIGHTMAGENTA_EX + query + Fore.RESET + "...")
+            queryEncoded = quote(query)
+            params = {
+                "q": queryEncoded,
+                "t": "0",
+                "p": "0"
+            }
+            response = requests.get(url, params=params)
+            if response.status_code == 200:
+                # Request was successful
+                data = response.json()
+                # Process the data as needed
+                for obj in data:
+                    title = obj.get('title', '')
+                    url = obj.get('url', 'Invalid result')
+                    description = obj.get('description', '')
+                    print(Fore.RED + title + " " + Fore.BLACK + url + "\n" + Fore.WHITE + description + "\n")
+                time.sleep(100)
+            else:
+                # Request failed
+                print(Fore.RED + " [X] API request failed with status code: " + response.status_code + Fore.RESET)
