@@ -3,9 +3,10 @@ import sys
 import requests
 import time
 import json
+import keyboard
 from colorama import init, Fore
 from urllib.parse import quote
-from tqdm import tqdm
+from halo import Halo
 
 url = "https://shuriken.pm/api.php"
 while True:
@@ -62,26 +63,55 @@ while True:
         print(Fore.RED + "[ Search Sites ] " + Fore.BLACK + "type in ~ to go back")
         query = input(Fore.RESET + " > ")
         if query != "~":
-            os.system('cls' if os.name == 'nt' else 'clear')
-            print(Fore.RED + "[ Search Sites ] " + Fore.BLACK + "Page")
-            print("\n [>] Searching for " + Fore.LIGHTMAGENTA_EX + query + Fore.RESET + "...")
-            queryEncoded = quote(query)
-            params = {
-                "q": queryEncoded,
-                "t": "0",
-                "p": "0"
-            }
-            response = requests.get(url, params=params)
-            if response.status_code == 200:
-                # Request was successful
-                data = response.json()
-                # Process the data as needed
-                for obj in data:
-                    title = obj.get('title', '')
-                    url = obj.get('url', 'Invalid result')
-                    description = obj.get('description', '')
-                    print(Fore.RED + title + " " + Fore.BLACK + url + "\n" + Fore.WHITE + description + "\n")
-                time.sleep(100)
-            else:
-                # Request failed
-                print(Fore.RED + " [X] API request failed with status code: " + response.status_code + Fore.RESET)
+            page = 0;
+            def sitesPage():
+                global url
+                global page
+                os.system('cls' if os.name == 'nt' else 'clear')
+                print(Fore.RED + "[ Search Sites ] " + Fore.BLACK)
+                spinnerText = "Searching for " + Fore.LIGHTMAGENTA_EX + query + Fore.RESET + "..."
+                spinner = Halo(spinner='line', text=spinnerText)
+                spinner.start()
+                queryEncoded = quote(query)
+                # checkpoint 1
+                params = {
+                    "q": queryEncoded,
+                    "t": "0",
+                    "p": page
+                }
+                # checkpoint 2
+                response = requests.get(url, params=params)
+                if response.status_code == 200:
+                    spinner.stop()
+                    os.system('cls' if os.name == 'nt' else 'clear')
+                    print(Fore.RED + "[ Search Sites ] " + Fore.BLACK + "Page 1 | " + query)
+                    # Request was successful
+                    data = response.json()
+                    # Process the data as needed
+                    if 'special_response' in data:
+                        del data['special_response']
+                    for obj in data:
+                        title = obj.get('title', '')
+                        url = obj.get('url', 'Invalid result')
+                        description = obj.get('description', '')
+                        print(Fore.RED + title + " " + Fore.BLACK + url + "\n" + Fore.WHITE + description + "\n")
+                    print(Fore.BLACK + '[<-] Previous ' + Fore.WHITE + "|" + Fore.BLACK + ' [->] Next Page' + Fore.WHITE + " | " + Fore.BLACK + '[Esc] Exit' + Fore.RESET)
+                    def on_left_arrow_press(event):
+                        global page
+                        if page != 0:
+                            page = (page - 1)
+                            sitesPage()
+                    def on_right_arrow_press(event):
+                        global page
+                        page = (page + 1)
+                        sitesPage()
+                    keyboard.on_press_key("left", on_left_arrow_press)
+                    keyboard.on_press_key("right", on_right_arrow_press)
+
+                    keyboard.wait('esc')
+                else:
+                    # Request failed
+                    print(Fore.RED + " [X] API request failed with status code: " + response.status_code + Fore.RESET)
+                    print("Press ESC to go back...")
+                    keyboard.wait('esc')
+            sitesPage()

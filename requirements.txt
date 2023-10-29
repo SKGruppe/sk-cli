@@ -1,8 +1,5 @@
-os
-sys
 requests
-time
-json
 colorama
-urllib.parse
-tqdm
+halo
+urllib3
+keyboard
